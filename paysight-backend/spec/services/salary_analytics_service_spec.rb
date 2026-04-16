@@ -51,4 +51,37 @@ RSpec.describe SalaryAnalyticsService do
       expect(query_count).to eq(1)
     end
   end
+
+  describe ".average_by_job_title" do
+    before do
+      create(:employee, country: "India", job_title: "Engineer", salary: 60_000)
+      create(:employee, country: "India", job_title: "Engineer", salary: 80_000)
+      create(:employee, country: "India", job_title: "Designer", salary: 50_000)
+      create(:employee, country: "USA", job_title: "Engineer", salary: 150_000)
+    end
+
+    context "with job_title specified" do
+      it "returns average salary for that title in the country" do
+        expect(described_class.average_by_job_title("India", "Engineer")).to eq(70_000.0)
+      end
+
+      it "returns nil when no employees match" do
+        expect(described_class.average_by_job_title("India", "CEO")).to be_nil
+      end
+    end
+
+    context "without job_title" do
+      it "returns all job titles with average salary ordered descending" do
+        result = described_class.average_by_job_title("India")
+
+        expect(result.length).to eq(2)
+        expect(result.first[:job_title]).to eq("Engineer")
+        expect(result.first[:average_salary]).to eq(70_000.0)
+      end
+
+      it "returns empty array for country with no employees" do
+        expect(described_class.average_by_job_title("Antarctica")).to eq([])
+      end
+    end
+  end
 end

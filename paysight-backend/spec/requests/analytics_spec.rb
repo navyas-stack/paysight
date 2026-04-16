@@ -33,4 +33,35 @@ RSpec.describe "Analytics API", type: :request do
       expect(JSON.parse(response.body)["error"]).to include("country")
     end
   end
+
+  describe "GET /api/v1/analytics/salary_by_job_title" do
+    before do
+      create(:employee, country: "India", job_title: "Engineer", salary: 60_000)
+      create(:employee, country: "India", job_title: "Engineer", salary: 80_000)
+      create(:employee, country: "India", job_title: "Designer", salary: 50_000)
+    end
+
+    it "returns average salary for a specific job title" do
+      get "/api/v1/analytics/salary_by_job_title", params: { country: "India", job_title: "Engineer" }
+
+      body = JSON.parse(response.body)
+      expect(response).to have_http_status(:ok)
+      expect(body["average"]).to eq(70_000.0)
+    end
+
+    it "returns all titles with averages when job_title is omitted" do
+      get "/api/v1/analytics/salary_by_job_title", params: { country: "India" }
+
+      body = JSON.parse(response.body)
+      expect(response).to have_http_status(:ok)
+      expect(body["titles"].length).to eq(2)
+      expect(body["titles"].first["job_title"]).to eq("Engineer")
+    end
+
+    it "returns 400 when country param is missing" do
+      get "/api/v1/analytics/salary_by_job_title"
+
+      expect(response).to have_http_status(:bad_request)
+    end
+  end
 end
