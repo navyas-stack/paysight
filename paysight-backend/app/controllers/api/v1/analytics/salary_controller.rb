@@ -17,6 +17,10 @@ module Api
           render_resource(result, key: key)
         end
 
+        def salary_summary_by_country
+          render_resource(SalaryAnalyticsService.salary_summary_by_country, key: :countries)
+        end
+
         private
 
         def missing_param(name)

@@ -8,6 +8,7 @@ Rails.application.routes.draw do
       namespace :analytics do
         get "salary_stats", to: "salary#stats_by_country"
         get "salary_by_job_title", to: "salary#average_by_job_title"
+        get "salary_summary_by_country", to: "salary#salary_summary_by_country"
       end
     end
   end
