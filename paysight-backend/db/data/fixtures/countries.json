@@ -1,0 +1,12 @@
+[
+  { "name": "India", "currency": "INR" },
+  { "name": "USA", "currency": "USD" },
+  { "name": "UK", "currency": "GBP" },
+  { "name": "Germany", "currency": "EUR" },
+  { "name": "Canada", "currency": "CAD" },
+  { "name": "Australia", "currency": "AUD" },
+  { "name": "Japan", "currency": "JPY" },
+  { "name": "Singapore", "currency": "SGD" },
+  { "name": "Brazil", "currency": "BRL" },
+  { "name": "France", "currency": "EUR" }
+]
