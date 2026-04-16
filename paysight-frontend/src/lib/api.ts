@@ -72,14 +72,13 @@ export const analyticsApi = {
   salaryStats: (country: string) =>
     api.get<SalaryStats>("/analytics/salary_stats", { params: { country } }),
 
-  salaryByJobTitle: (country: string, job_title: string) =>
-    api.get<{ average: number | null }>("/analytics/salary_by_job_title", { params: { country, job_title } }),
+  salaryByJobTitle: (country: string, job_title?: string) =>
+    job_title
+      ? api.get<{ average: number | null }>("/analytics/salary_by_job_title", { params: { country, job_title } })
+      : api.get<{ titles: TitleSalary[] }>("/analytics/salary_by_job_title", { params: { country } }),
 
-  topPayingTitles: (country: string, limit?: number) =>
-    api.get<{ titles: TitleSalary[] }>("/analytics/top_paying_titles", { params: { country, limit } }),
-
-  countryOverview: () =>
-    api.get<{ countries: CountryOverview[] }>("/analytics/country_overview"),
+  salarySummaryByCountry: () =>
+    api.get<{ countries: CountryOverview[] }>("/analytics/salary_summary_by_country"),
 };
 
 export default api;
