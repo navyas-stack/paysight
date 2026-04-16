@@ -8,6 +8,15 @@ module Api
           render_resource(SalaryAnalyticsService.stats_by_country(params[:country]))
         end
 
+        def average_by_job_title
+          return missing_param("country") if params[:country].blank?
+
+          result = SalaryAnalyticsService.average_by_job_title(params[:country], params[:job_title])
+          key = params[:job_title].present? ? :average : :titles
+
+          render_resource(result, key: key)
+        end
+
         private
 
         def missing_param(name)

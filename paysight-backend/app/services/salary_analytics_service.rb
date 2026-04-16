@@ -5,4 +5,17 @@ class SalaryAnalyticsService
 
     { min: result[0]&.to_f, max: result[1]&.to_f, average: result[2]&.to_f&.round(2), count: result[3] || 0 }
   end
+
+  def self.average_by_job_title(country, job_title = nil)
+    scope = Employee.where(country: country)
+
+    if job_title.present?
+      scope.where(job_title: job_title).average(:salary)&.to_f&.round(2)
+    else
+      scope.group(:job_title)
+        .select("job_title, AVG(salary) as average_salary")
+        .order("average_salary DESC")
+        .map { |r| { job_title: r.job_title, average_salary: r.average_salary.to_f.round(2) } }
+    end
+  end
 end
