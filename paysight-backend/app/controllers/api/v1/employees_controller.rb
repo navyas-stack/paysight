@@ -1,6 +1,8 @@
 module Api
   module V1
     class EmployeesController < ApplicationController
+      before_action :set_employee, only: [:show, :update]
+
       MAX_PER_PAGE = 100
 
       def index
@@ -19,8 +21,7 @@ module Api
       end
 
       def show
-        employee = Employee.find(params[:id])
-        render json: { employee: employee }
+        render json: { employee: @employee }
       end
 
       def create
@@ -34,16 +35,18 @@ module Api
       end
 
       def update
-        employee = Employee.find(params[:id])
-
-        if employee.update(employee_params)
-          render json: { employee: employee }
+        if @employee.update(employee_params)
+          render json: { employee: @employee }
         else
-          render json: { errors: employee.errors.full_messages }, status: :unprocessable_entity
+          render json: { errors: @employee.errors.full_messages }, status: :unprocessable_entity
         end
       end
 
       private
+
+      def set_employee
+        @employee = Employee.find(params[:id])
+      end
 
       def employee_params
         params.require(:employee).permit(
