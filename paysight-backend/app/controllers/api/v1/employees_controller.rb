@@ -1,7 +1,7 @@
 module Api
   module V1
     class EmployeesController < ApplicationController
-      before_action :set_employee, only: [:show, :update]
+      before_action :set_employee, only: [:show, :update, :destroy]
 
       MAX_PER_PAGE = 100
 
@@ -32,6 +32,11 @@ module Api
         else
           render json: { errors: employee.errors.full_messages }, status: :unprocessable_entity
         end
+      end
+
+      def destroy
+        @employee.destroy
+        head :no_content
       end
 
       def update
