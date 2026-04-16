@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { Table, Button, Modal, Form, message, Tag, Typography } from "antd";
-import { PlusOutlined, EditOutlined } from "@ant-design/icons";
+import { Table, Button, Modal, Form, message, Tag, Space, Popconfirm, Typography } from "antd";
+import { PlusOutlined, EditOutlined, DeleteOutlined } from "@ant-design/icons";
 import { employeesApi, type Employee, type PaginationMeta } from "@/lib/api";
 import EmployeeForm from "@/components/EmployeeForm";
 
@@ -62,6 +62,16 @@ export default function EmployeesPage() {
     }
   };
 
+  const handleDelete = async (id: number) => {
+    try {
+      await employeesApi.delete(id);
+      message.success("Employee deleted");
+      fetchEmployees(meta.current_page);
+    } catch {
+      message.error("Failed to delete employee");
+    }
+  };
+
   const openCreate = () => {
     setEditingEmployee(null);
     form.resetFields();
@@ -98,7 +108,12 @@ export default function EmployeesPage() {
       title: "Actions",
       key: "actions",
       render: (_: unknown, record: Employee) => (
-        <Button icon={<EditOutlined />} size="small" onClick={() => openEdit(record)} />
+        <Space>
+          <Button icon={<EditOutlined />} size="small" onClick={() => openEdit(record)} />
+          <Popconfirm title="Delete this employee?" onConfirm={() => handleDelete(record.id)}>
+            <Button icon={<DeleteOutlined />} size="small" danger />
+          </Popconfirm>
+        </Space>
       ),
     },
   ];
