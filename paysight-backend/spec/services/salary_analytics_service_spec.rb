@@ -84,4 +84,27 @@ RSpec.describe SalaryAnalyticsService do
       end
     end
   end
+
+  describe ".salary_summary_by_country" do
+    before do
+      create(:employee, country: "India", salary: 50_000)
+      create(:employee, country: "India", salary: 70_000)
+      create(:employee, country: "USA", salary: 100_000)
+    end
+
+    it "returns count and average salary grouped by country" do
+      result = described_class.salary_summary_by_country
+
+      expect(result.length).to eq(2)
+
+      india = result.find { |r| r[:country] == "India" }
+      expect(india[:count]).to eq(2)
+      expect(india[:average_salary]).to be_within(0.01).of(60_000.0)
+    end
+
+    it "returns empty array when no employees exist" do
+      Employee.delete_all
+      expect(described_class.salary_summary_by_country).to eq([])
+    end
+  end
 end
