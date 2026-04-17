@@ -1,6 +1,8 @@
 require 'rails_helper'
 
 RSpec.describe 'Analytics API', type: :request do
+  let(:body) { JSON.parse(response.body) }
+
   describe 'GET /api/v1/analytics/salary_stats' do
     before do
       create(:employee, country: 'India', salary: 50_000)
@@ -11,7 +13,6 @@ RSpec.describe 'Analytics API', type: :request do
     it 'returns min, max, average, and count for the given country' do
       get '/api/v1/analytics/salary_stats', params: { country: 'India' }
 
-      body = JSON.parse(response.body)
       expect(response).to have_http_status(:ok)
       expect(body['success']).to be(true)
       expect(body['data']['min']).to eq(50_000.0)
@@ -23,7 +24,6 @@ RSpec.describe 'Analytics API', type: :request do
     it 'returns zero count for a country with no employees' do
       get '/api/v1/analytics/salary_stats', params: { country: 'Antarctica' }
 
-      body = JSON.parse(response.body)
       expect(body['data']['count']).to eq(0)
     end
 
@@ -31,7 +31,6 @@ RSpec.describe 'Analytics API', type: :request do
       get '/api/v1/analytics/salary_stats'
 
       expect(response).to have_http_status(:bad_request)
-      body = JSON.parse(response.body)
       expect(body['success']).to be(false)
       expect(body['error']).to include('country')
     end
@@ -47,7 +46,6 @@ RSpec.describe 'Analytics API', type: :request do
     it 'returns average salary for a specific job title' do
       get '/api/v1/analytics/salary_by_job_title', params: { country: 'India', job_title: 'Engineer' }
 
-      body = JSON.parse(response.body)
       expect(response).to have_http_status(:ok)
       expect(body['data']['average']).to eq(70_000.0)
     end
@@ -55,7 +53,6 @@ RSpec.describe 'Analytics API', type: :request do
     it 'returns all titles with averages when job_title is omitted' do
       get '/api/v1/analytics/salary_by_job_title', params: { country: 'India' }
 
-      body = JSON.parse(response.body)
       expect(response).to have_http_status(:ok)
       expect(body['data']['titles'].length).to eq(2)
       expect(body['data']['titles'].first['job_title']).to eq('Engineer')
@@ -76,7 +73,6 @@ RSpec.describe 'Analytics API', type: :request do
 
       get '/api/v1/analytics/salary_summary_by_country'
 
-      body = JSON.parse(response.body)
       expect(response).to have_http_status(:ok)
       expect(body['data']['countries'].length).to eq(2)
 
@@ -87,7 +83,6 @@ RSpec.describe 'Analytics API', type: :request do
     it 'returns empty array when no employees exist' do
       get '/api/v1/analytics/salary_summary_by_country'
 
-      body = JSON.parse(response.body)
       expect(body['data']['countries']).to eq([])
     end
   end
