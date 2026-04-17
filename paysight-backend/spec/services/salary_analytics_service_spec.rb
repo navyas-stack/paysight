@@ -60,28 +60,33 @@ RSpec.describe SalaryAnalyticsService do
       create(:employee, country: "USA", job_title: "Engineer", salary: 150_000)
     end
 
-    context "with job_title specified" do
-      it "returns average salary for that title in the country" do
-        expect(described_class.average_by_job_title("India", "Engineer")).to eq(70_000.0)
-      end
+    it "returns average and all titles when job_title is specified" do
+      result = described_class.average_by_job_title("India", "Engineer")
 
-      it "returns nil when no employees match" do
-        expect(described_class.average_by_job_title("India", "CEO")).to be_nil
-      end
+      expect(result[:average]).to eq(70_000.0)
+      expect(result[:titles].length).to eq(2)
     end
 
-    context "without job_title" do
-      it "returns all job titles with average salary ordered descending" do
-        result = described_class.average_by_job_title("India")
+    it "returns nil average when no employees match specified title" do
+      result = described_class.average_by_job_title("India", "CEO")
 
-        expect(result.length).to eq(2)
-        expect(result.first[:job_title]).to eq("Engineer")
-        expect(result.first[:average_salary]).to eq(70_000.0)
-      end
+      expect(result[:average]).to be_nil
+    end
 
-      it "returns empty array for country with no employees" do
-        expect(described_class.average_by_job_title("Antarctica")).to eq([])
-      end
+    it "returns all titles with nil average when job_title is omitted" do
+      result = described_class.average_by_job_title("India")
+
+      expect(result[:average]).to be_nil
+      expect(result[:titles].length).to eq(2)
+      expect(result[:titles].first[:job_title]).to eq("Engineer")
+      expect(result[:titles].first[:average_salary]).to eq(70_000.0)
+    end
+
+    it "returns empty titles for country with no employees" do
+      result = described_class.average_by_job_title("Antarctica")
+
+      expect(result[:average]).to be_nil
+      expect(result[:titles]).to eq([])
     end
   end
 

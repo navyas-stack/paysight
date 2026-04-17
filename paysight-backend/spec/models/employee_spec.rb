@@ -20,10 +20,17 @@ RSpec.describe Employee, type: :model do
     it { is_expected.not_to allow_value("missing@domain").for(:email) }
     it { is_expected.not_to allow_value("@domain.com").for(:email) }
 
-    it {
-      is_expected.to validate_inclusion_of(:employment_status)
-        .in_array(%w[active inactive terminated])
-    }
+    it "defines employment_status as an enum with the expected values" do
+      expect(Employee.employment_statuses.keys).to match_array(%w[active inactive terminated])
+    end
+  end
+
+  describe "scopes" do
+    it ".by_country returns only employees from the given country" do
+      create(:employee, country: "India")
+      create(:employee, country: "USA")
+      expect(Employee.by_country("India").pluck(:country)).to all(eq("India"))
+    end
   end
 
   describe "callbacks" do

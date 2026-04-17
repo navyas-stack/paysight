@@ -50,7 +50,7 @@ module Api
       def filtered_employees
         scope = Employee.order(:id)
         scope = scope.search(params[:search]) if params[:search].present?
-        scope = scope.where(country: params[:country]) if params[:country].present?
+        scope = scope.by_country(params[:country]) if params[:country].present?
         scope = scope.by_job_title(params[:job_title]) if params[:job_title].present?
         scope = scope.by_status(params[:employment_status]) if params[:employment_status].present?
         scope

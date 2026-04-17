@@ -5,10 +5,10 @@ Rails.application.routes.draw do
     namespace :v1 do
       resources :employees
 
-      namespace :analytics do
-        get "salary_stats", to: "salary#stats_by_country"
-        get "salary_by_job_title", to: "salary#average_by_job_title"
-        get "salary_summary_by_country", to: "salary#salary_summary_by_country"
+      scope controller: "salary_analytics" do
+        get "analytics/salary_stats", action: :stats_by_country
+        get "analytics/salary_by_job_title", action: :average_by_job_title
+        get "analytics/salary_summary_by_country", action: :salary_summary_by_country
       end
     end
   end

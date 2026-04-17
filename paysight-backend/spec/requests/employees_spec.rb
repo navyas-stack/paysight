@@ -23,9 +23,10 @@ RSpec.describe "Employees API", type: :request do
       expect(response).to have_http_status(:created)
 
       body = JSON.parse(response.body)
-      expect(body["employee"]["full_name"]).to eq("John Doe")
-      expect(body["employee"]["email"]).to eq("john@example.com")
-      expect(body["employee"]["id"]).to be_present
+      expect(body["success"]).to be(true)
+      expect(body["data"]["employee"]["full_name"]).to eq("John Doe")
+      expect(body["data"]["employee"]["email"]).to eq("john@example.com")
+      expect(body["data"]["employee"]["id"]).to be_present
     end
 
     it "returns 422 with validation errors when required fields are missing" do
@@ -34,6 +35,7 @@ RSpec.describe "Employees API", type: :request do
       expect(response).to have_http_status(:unprocessable_entity)
 
       body = JSON.parse(response.body)
+      expect(body["success"]).to be(false)
       expect(body["errors"]).to include(/full name/i)
       expect(body["errors"]).to include(/salary/i)
     end
@@ -76,7 +78,7 @@ RSpec.describe "Employees API", type: :request do
 
       body = JSON.parse(response.body)
       expect(response).to have_http_status(:ok)
-      expect(body["employees"].length).to eq(3)
+      expect(body["data"]["employees"].length).to eq(3)
       expect(body["meta"]).to include("total_count", "total_pages", "current_page", "per_page")
     end
 
@@ -91,7 +93,7 @@ RSpec.describe "Employees API", type: :request do
       get "/api/v1/employees", params: { page: 1, per_page: 2 }
 
       body = JSON.parse(response.body)
-      expect(body["employees"].length).to eq(2)
+      expect(body["data"]["employees"].length).to eq(2)
       expect(body["meta"]["current_page"]).to eq(1)
       expect(body["meta"]["per_page"]).to eq(2)
     end
@@ -102,7 +104,7 @@ RSpec.describe "Employees API", type: :request do
       get "/api/v1/employees"
 
       body = JSON.parse(response.body)
-      expect(body["employees"]).to eq([])
+      expect(body["data"]["employees"]).to eq([])
       expect(body["meta"]["total_count"]).to eq(0)
     end
   end
@@ -121,55 +123,55 @@ RSpec.describe "Employees API", type: :request do
       get "/api/v1/employees", params: { country: "India" }
 
       body = JSON.parse(response.body)
-      expect(body["employees"].pluck("country").uniq).to eq(["India"])
-      expect(body["employees"].length).to eq(2)
+      expect(body["data"]["employees"].pluck("country").uniq).to eq(["India"])
+      expect(body["data"]["employees"].length).to eq(2)
     end
 
     it "filters by job_title" do
       get "/api/v1/employees", params: { job_title: "Designer" }
 
       body = JSON.parse(response.body)
-      expect(body["employees"].length).to eq(1)
-      expect(body["employees"].first["full_name"]).to eq("John Smith")
+      expect(body["data"]["employees"].length).to eq(1)
+      expect(body["data"]["employees"].first["full_name"]).to eq("John Smith")
     end
 
     it "filters by employment_status" do
       get "/api/v1/employees", params: { employment_status: "terminated" }
 
       body = JSON.parse(response.body)
-      expect(body["employees"].length).to eq(1)
-      expect(body["employees"].first["full_name"]).to eq("Priya Patel")
+      expect(body["data"]["employees"].length).to eq(1)
+      expect(body["data"]["employees"].first["full_name"]).to eq("Priya Patel")
     end
 
     it "searches by full_name case-insensitively" do
       get "/api/v1/employees", params: { search: "sharma" }
 
       body = JSON.parse(response.body)
-      expect(body["employees"].length).to eq(1)
-      expect(body["employees"].first["full_name"]).to eq("Rahul Sharma")
+      expect(body["data"]["employees"].length).to eq(1)
+      expect(body["data"]["employees"].first["full_name"]).to eq("Rahul Sharma")
     end
 
     it "searches by email substring" do
       get "/api/v1/employees", params: { search: "priya@" }
 
       body = JSON.parse(response.body)
-      expect(body["employees"].length).to eq(1)
-      expect(body["employees"].first["email"]).to eq("priya@paysight.com")
+      expect(body["data"]["employees"].length).to eq(1)
+      expect(body["data"]["employees"].first["email"]).to eq("priya@paysight.com")
     end
 
     it "combines search with filters" do
       get "/api/v1/employees", params: { search: "sharma", country: "India", employment_status: "active" }
 
       body = JSON.parse(response.body)
-      expect(body["employees"].length).to eq(1)
-      expect(body["employees"].first["full_name"]).to eq("Rahul Sharma")
+      expect(body["data"]["employees"].length).to eq(1)
+      expect(body["data"]["employees"].first["full_name"]).to eq("Rahul Sharma")
     end
 
     it "returns empty list when no employees match the filters" do
       get "/api/v1/employees", params: { country: "India", employment_status: "inactive" }
 
       body = JSON.parse(response.body)
-      expect(body["employees"]).to eq([])
+      expect(body["data"]["employees"]).to eq([])
       expect(body["meta"]["total_count"]).to eq(0)
     end
   end
@@ -182,7 +184,7 @@ RSpec.describe "Employees API", type: :request do
 
       body = JSON.parse(response.body)
       expect(response).to have_http_status(:ok)
-      expect(body["employee"]["full_name"]).to eq("Jane Doe")
+      expect(body["data"]["employee"]["full_name"]).to eq("Jane Doe")
     end
 
     it "returns 404 for non-existent employee" do
@@ -201,7 +203,7 @@ RSpec.describe "Employees API", type: :request do
 
       body = JSON.parse(response.body)
       expect(response).to have_http_status(:ok)
-      expect(body["employee"]["full_name"]).to eq("New Name")
+      expect(body["data"]["employee"]["full_name"]).to eq("New Name")
     end
 
     it "returns 422 when update violates validation" do
