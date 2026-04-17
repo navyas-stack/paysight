@@ -1,6 +1,10 @@
 class Employee < ApplicationRecord
   EMAIL_FORMAT = /\A[^@\s]+@[^@\s]+\.[^@\s]+\z/
 
+  scope :by_job_title, ->(title) { where(job_title: title) }
+  scope :by_status, ->(status) { where(employment_status: status) }
+  scope :search, ->(term) { where("full_name ILIKE :q OR email ILIKE :q", q: "%#{term}%") }
+
   before_validation :normalize_email
 
   validates :full_name, presence: true

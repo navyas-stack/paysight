@@ -4,7 +4,7 @@ module Api
       before_action :set_employee, only: [:show, :update, :destroy]
 
       def index
-        render_resource(Employee.order(:id), key: :employees, paginate: true)
+        render_resource(filtered_employees, key: :employees, paginate: true)
       end
 
       def show
@@ -45,6 +45,15 @@ module Api
           :full_name, :email, :job_title, :country,
           :salary, :currency, :employment_status, :date_of_joining
         )
+      end
+
+      def filtered_employees
+        scope = Employee.order(:id)
+        scope = scope.search(params[:search]) if params[:search].present?
+        scope = scope.where(country: params[:country]) if params[:country].present?
+        scope = scope.by_job_title(params[:job_title]) if params[:job_title].present?
+        scope = scope.by_status(params[:employment_status]) if params[:employment_status].present?
+        scope
       end
     end
   end
