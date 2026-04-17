@@ -1,42 +1,25 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
-import { Table, Button, Modal, Form, Input, Select, message, Tag, Space, Popconfirm, Typography } from "antd";
-import { PlusOutlined, EditOutlined, DeleteOutlined } from "@ant-design/icons";
-import { employeesApi, type Employee, type EmployeeFilters, type PaginationMeta } from "@/lib/api";
+import React, { useState, useEffect } from "react";
+import { Button, Modal, Form, Input, Select, Space, message, Typography } from "antd";
+import { PlusOutlined } from "@ant-design/icons";
+import { useRouter } from "next/navigation";
+import { employeesApi } from "@/services/employeesApi";
+import { useEmployees } from "@/hooks/useEmployees";
+import EmployeeTable from "@/components/EmployeeTable";
 import EmployeeForm from "@/components/EmployeeForm";
+import { ROUTES, COUNTRIES, JOB_TITLES, EMPLOYMENT_STATUSES } from "@/constants";
+import type { Employee, EmployeeFilters } from "@/types";
 
 const { Title } = Typography;
 
-const COUNTRIES = ["India", "USA", "UK", "Germany", "Canada", "Australia", "Japan", "Singapore", "Brazil", "France"];
-const JOB_TITLES = ["Engineer", "Designer", "Manager", "Director", "Analyst", "Consultant", "Architect", "Lead", "Intern", "Coordinator"];
-const EMPLOYMENT_STATUSES = [
-  { label: "Active", value: "active" },
-  { label: "Inactive", value: "inactive" },
-  { label: "Terminated", value: "terminated" },
-];
-
 export default function EmployeesPage() {
-  const [employees, setEmployees] = useState<Employee[]>([]);
-  const [meta, setMeta] = useState<PaginationMeta>({ total_count: 0, total_pages: 0, current_page: 1, per_page: 25 });
-  const [loading, setLoading] = useState(false);
+  const router = useRouter();
+  const { employees, meta, loading, fetchEmployees } = useEmployees();
   const [modalOpen, setModalOpen] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [filters, setFilters] = useState<EmployeeFilters>({});
   const [form] = Form.useForm();
-
-  const fetchEmployees = useCallback(async (page = 1, activeFilters: EmployeeFilters = {}) => {
-    setLoading(true);
-    try {
-      const { data } = await employeesApi.list({ page, per_page: 25, ...activeFilters });
-      setEmployees(data.employees);
-      setMeta(data.meta);
-    } catch {
-      message.error("Failed to load employees");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
 
   useEffect(() => {
     fetchEmployees();
@@ -44,7 +27,7 @@ export default function EmployeesPage() {
 
   const applyFilters = (next: EmployeeFilters) => {
     setFilters(next);
-    fetchEmployees(1, next);
+    fetchEmployees(1, meta.per_page, next);
   };
 
   const clearFilters = () => applyFilters({});
@@ -68,7 +51,7 @@ export default function EmployeesPage() {
       setModalOpen(false);
       form.resetFields();
       setEditingEmployee(null);
-      fetchEmployees(meta.current_page, filters);
+      fetchEmployees(meta.current_page, meta.per_page, filters);
     } catch (err: unknown) {
       if (err && typeof err === "object" && "response" in err) {
         const axiosErr = err as { response?: { data?: { errors?: string[] } } };
@@ -82,7 +65,7 @@ export default function EmployeesPage() {
     try {
       await employeesApi.delete(id);
       message.success("Employee deleted");
-      fetchEmployees(meta.current_page, filters);
+      fetchEmployees(meta.current_page, meta.per_page, filters);
     } catch {
       message.error("Failed to delete employee");
     }
@@ -99,51 +82,16 @@ export default function EmployeesPage() {
     setModalOpen(true);
   };
 
-  const columns = [
-    { title: "Full Name", dataIndex: "full_name", key: "full_name" },
-    { title: "Email", dataIndex: "email", key: "email" },
-    { title: "Job Title", dataIndex: "job_title", key: "job_title" },
-    { title: "Country", dataIndex: "country", key: "country" },
-    {
-      title: "Salary",
-      dataIndex: "salary",
-      key: "salary",
-      render: (val: string) => `$${Number(val).toLocaleString()}`,
-    },
-    {
-      title: "Status",
-      dataIndex: "employment_status",
-      key: "employment_status",
-      render: (status: string) => (
-        <Tag color={status === "active" ? "green" : status === "inactive" ? "orange" : "red"}>
-          {status.toUpperCase()}
-        </Tag>
-      ),
-    },
-    {
-      title: "Actions",
-      key: "actions",
-      render: (_: unknown, record: Employee) => (
-        <Space>
-          <Button icon={<EditOutlined />} size="small" onClick={() => openEdit(record)} />
-          <Popconfirm title="Delete this employee?" onConfirm={() => handleDelete(record.id)}>
-            <Button icon={<DeleteOutlined />} size="small" danger />
-          </Popconfirm>
-        </Space>
-      ),
-    },
-  ];
-
   return (
     <div>
-      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 16 }}>
-        <Title level={3} style={{ margin: 0 }}>Employees</Title>
+      <div className="page-header">
+        <Title level={3} className="page-header__title">Employees</Title>
         <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
           Add Employee
         </Button>
       </div>
 
-      <Space style={{ marginBottom: 16 }} wrap>
+      <Space className="employees-filters" wrap>
         <Input.Search
           placeholder="Search by name or email"
           allowClear
@@ -179,18 +127,14 @@ export default function EmployeesPage() {
         <Button onClick={clearFilters}>Clear</Button>
       </Space>
 
-      <Table
-        dataSource={employees}
-        columns={columns}
-        rowKey="id"
+      <EmployeeTable
+        employees={employees}
+        meta={meta}
         loading={loading}
-        pagination={{
-          current: meta.current_page,
-          pageSize: meta.per_page,
-          total: meta.total_count,
-          onChange: (page) => fetchEmployees(page, filters),
-          showTotal: (total) => `${total} employees`,
-        }}
+        onPageChange={(page, pageSize) => fetchEmployees(page, pageSize, filters)}
+        onEdit={openEdit}
+        onDelete={handleDelete}
+        onView={(id) => router.push(ROUTES.EMPLOYEE_DETAIL(id))}
       />
 
       <Modal

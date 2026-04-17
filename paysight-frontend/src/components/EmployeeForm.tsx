@@ -2,25 +2,14 @@
 
 import React from "react";
 import { Form, Input, InputNumber, Select, DatePicker } from "antd";
-import type { Employee } from "@/lib/api";
 import dayjs from "dayjs";
+import { COUNTRIES, COUNTRY_CURRENCY, JOB_TITLES, EMPLOYMENT_STATUSES } from "@/constants";
+import type { Employee } from "@/types";
 
 interface EmployeeFormProps {
   form: ReturnType<typeof Form.useForm>[0];
   initialValues?: Partial<Employee>;
 }
-
-const COUNTRY_CURRENCY: Record<string, string> = {
-  India: "INR", USA: "USD", UK: "GBP", Germany: "EUR", Canada: "CAD",
-  Australia: "AUD", Japan: "JPY", Singapore: "SGD", Brazil: "BRL", France: "EUR",
-};
-
-const COUNTRIES = Object.keys(COUNTRY_CURRENCY);
-
-const JOB_TITLES = [
-  "Engineer", "Designer", "Manager", "Director", "Analyst",
-  "Consultant", "Architect", "Lead", "Intern", "Coordinator",
-];
 
 export default function EmployeeForm({ form, initialValues }: EmployeeFormProps) {
   React.useEffect(() => {
@@ -55,7 +44,7 @@ export default function EmployeeForm({ form, initialValues }: EmployeeFormProps)
       </Form.Item>
 
       <Form.Item name="salary" label="Salary" rules={[{ required: true }]}>
-        <InputNumber style={{ width: "100%" }} min={1} />
+        <InputNumber className="w-full" min={1} style={{ width: "100%" }} />
       </Form.Item>
 
       <Form.Item name="currency" label="Currency" initialValue="USD">
@@ -63,7 +52,7 @@ export default function EmployeeForm({ form, initialValues }: EmployeeFormProps)
       </Form.Item>
 
       <Form.Item name="employment_status" label="Status" initialValue="active">
-        <Select options={[{ label: "Active", value: "active" }, { label: "Inactive", value: "inactive" }, { label: "Terminated", value: "terminated" }]} />
+        <Select options={EMPLOYMENT_STATUSES} />
       </Form.Item>
 
       <Form.Item name="date_of_joining" label="Date of Joining">

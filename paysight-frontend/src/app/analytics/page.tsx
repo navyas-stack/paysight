@@ -1,72 +1,24 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
-import { Card, Select, Statistic, Row, Col, Table, Typography, Spin, Empty } from "antd";
+import React, { useState } from "react";
+import { Card, Select, Statistic, Row, Col, Table, Typography, Empty } from "antd";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
-import { analyticsApi, type SalaryStats, type TitleSalary, type CountryOverview } from "@/lib/api";
+import Loader from "@/components/Loader";
+import { useCountryInsights, useSalarySummary } from "@/hooks/useSalaryInsights";
+import { COUNTRIES, COUNTRY_CURRENCY, JOB_TITLES } from "@/constants";
+import type { CountryOverview } from "@/types";
 
 const { Title } = Typography;
-
-const COUNTRY_CURRENCY: Record<string, string> = {
-  India: "INR", USA: "USD", UK: "GBP", Germany: "EUR", Canada: "CAD",
-  Australia: "AUD", Japan: "JPY", Singapore: "SGD", Brazil: "BRL", France: "EUR",
-};
-
-const COUNTRIES = Object.keys(COUNTRY_CURRENCY);
-
-const JOB_TITLES = [
-  "Engineer", "Designer", "Manager", "Director", "Analyst",
-  "Consultant", "Architect", "Lead", "Intern", "Coordinator",
-];
 
 export default function AnalyticsPage() {
   const [country, setCountry] = useState<string>("India");
   const [jobTitle, setJobTitle] = useState<string>("Engineer");
-  const [stats, setStats] = useState<SalaryStats | null>(null);
-  const [jobTitleAvg, setJobTitleAvg] = useState<number | null>(null);
-  const [allTitles, setAllTitles] = useState<TitleSalary[]>([]);
-  const [overview, setOverview] = useState<CountryOverview[]>([]);
-  const [loading, setLoading] = useState(false);
 
   const currency = COUNTRY_CURRENCY[country] || "USD";
 
-  useEffect(() => {
-    analyticsApi.salarySummaryByCountry().then(({ data }) => setOverview(data.countries));
-  }, []);
-
-  const fetchCountryData = useCallback(async (selectedCountry: string) => {
-    setLoading(true);
-    try {
-      const [statsRes, titlesRes] = await Promise.all([
-        analyticsApi.salaryStats(selectedCountry),
-        analyticsApi.salaryByJobTitle(selectedCountry),
-      ]);
-      setStats(statsRes.data);
-      setAllTitles((titlesRes.data as { titles: TitleSalary[] }).titles || []);
-    } catch {
-      setStats(null);
-      setAllTitles([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchCountryData(country);
-  }, [country, fetchCountryData]);
-
-  const fetchJobTitleAvg = useCallback(async (c: string, jt: string) => {
-    try {
-      const { data } = await analyticsApi.salaryByJobTitle(c, jt);
-      setJobTitleAvg((data as { average: number | null }).average);
-    } catch {
-      setJobTitleAvg(null);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchJobTitleAvg(country, jobTitle);
-  }, [country, jobTitle, fetchJobTitleAvg]);
+  const summary = useSalarySummary();
+  const { stats, titles, loading } = useCountryInsights(country);
+  const jobTitleAvg = titles.find((t) => t.job_title === jobTitle)?.average_salary ?? null;
 
   const overviewColumns = [
     { title: "Country", dataIndex: "country", key: "country" },
@@ -82,21 +34,21 @@ export default function AnalyticsPage() {
 
   return (
     <div>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24, position: "sticky", top: 0, zIndex: 5, background: "#f5f5f5", paddingTop: 16, paddingBottom: 8 }}>
-        <Title level={3} style={{ margin: 0 }}>Salary Insights</Title>
+      <div className="page-header page-header--analytics">
+        <Title level={3} className="page-header__title">Salary Insights</Title>
         <Select
           value={country}
           onChange={setCountry}
-          style={{ width: 200 }}
+          className="filter-select"
           options={COUNTRIES.map((c) => ({ label: c, value: c }))}
         />
       </div>
 
       {loading ? (
-        <Spin size="large" style={{ display: "block", margin: "100px auto" }} />
+        <Loader />
       ) : (
         <>
-          <Card title={`Salary Statistics — ${country}`} style={{ marginBottom: 24 }}>
+          <Card title={`Salary Statistics — ${country}`} className="section-card">
             {stats && stats.count > 0 ? (
               <Row gutter={16}>
                 <Col span={6}>
@@ -117,12 +69,12 @@ export default function AnalyticsPage() {
             )}
           </Card>
 
-          <Card title={`Average Salary by Job Title — ${country}`} style={{ marginBottom: 24 }}>
-            <div style={{ marginBottom: 16 }}>
+          <Card title={`Average Salary by Job Title — ${country}`} className="section-card">
+            <div className="filter-row">
               <Select
                 value={jobTitle}
                 onChange={setJobTitle}
-                style={{ width: 200 }}
+                className="filter-select"
                 options={JOB_TITLES.map((t) => ({ label: t, value: t }))}
               />
             </div>
@@ -133,16 +85,18 @@ export default function AnalyticsPage() {
               <Empty description={`No ${jobTitle} employees in ${country}`} />
             )}
 
-            {allTitles.length > 0 && (
-              <ResponsiveContainer width="100%" height={350} style={{ marginTop: 24 }}>
-                <BarChart data={allTitles}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="job_title" />
-                  <YAxis />
-                  <Tooltip formatter={(value) => `${currency} ${Number(value).toLocaleString()}`} />
-                  <Bar dataKey="average_salary" fill="#1677ff" />
-                </BarChart>
-              </ResponsiveContainer>
+            {titles.length > 0 && (
+              <div className="chart-container">
+                <ResponsiveContainer width="100%" height={350}>
+                  <BarChart data={titles}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="job_title" />
+                    <YAxis />
+                    <Tooltip formatter={(value) => `${currency} ${Number(value).toLocaleString()}`} />
+                    <Bar dataKey="average_salary" fill="#1677ff" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
             )}
           </Card>
         </>
@@ -150,7 +104,7 @@ export default function AnalyticsPage() {
 
       <Card title="Salary Summary by Country">
         <Table
-          dataSource={overview}
+          dataSource={summary}
           columns={overviewColumns}
           rowKey="country"
           pagination={false}
