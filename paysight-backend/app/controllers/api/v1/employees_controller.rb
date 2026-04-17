@@ -1,7 +1,7 @@
 module Api
   module V1
     class EmployeesController < ApplicationController
-      before_action :set_employee, only: [:show, :update, :destroy]
+      before_action :set_employee, only: %i[show update destroy]
 
       def index
         render_resource(filtered_employees, key: :employees, paginate: true)

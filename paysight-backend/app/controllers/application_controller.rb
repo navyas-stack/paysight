@@ -4,7 +4,7 @@ class ApplicationController < ActionController::API
 
   rescue_from StandardError do |e|
     Rails.logger.error("[#{e.class}] #{e.message}\n#{e.backtrace&.first(10)&.join("\n")}")
-    render_error("Internal server error", status: :internal_server_error)
+    render_error('Internal server error', status: :internal_server_error)
   end
 
   rescue_from ActiveRecord::RecordNotFound do |e|

@@ -26,7 +26,7 @@ module Api
       end
 
       def salary_summary_by_country
-        result = cached("salary_summary_by_country") do
+        result = cached('salary_summary_by_country') do
           SalaryAnalyticsService.salary_summary_by_country
         end
 
