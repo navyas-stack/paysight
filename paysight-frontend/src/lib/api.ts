@@ -26,6 +26,13 @@ export interface Employee {
   date_of_joining: string | null;
 }
 
+export interface EmployeeFilters {
+  search?: string;
+  country?: string;
+  job_title?: string;
+  employment_status?: string;
+}
+
 export interface PaginationMeta {
   total_count: number;
   total_pages: number;
@@ -52,7 +59,7 @@ export interface CountryOverview {
 }
 
 export const employeesApi = {
-  list: (params?: { page?: number; per_page?: number }) =>
+  list: (params?: { page?: number; per_page?: number } & EmployeeFilters) =>
     api.get<{ employees: Employee[]; meta: PaginationMeta }>("/employees", { params }),
 
   get: (id: number) =>
